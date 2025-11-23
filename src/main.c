@@ -32,6 +32,41 @@ int isValidCommand(char* command){
   return 0;
 }
 
+int doesFileExist(char* filepath){
+  FILE *file = fopen(filepath, "r");
+  if(file != NULL){
+    fclose(file);
+    return 1;
+  }
+  return 0;
+}
+
+char* isValidPathFile(char* name){
+  char* path = getenv("PATH");
+  char* directory = strtok(path, ":");
+  int c = 0;
+  char* directories[100];
+  while(directory != NULL){
+    directories[c] = directory;
+    c++;
+    directory = strtok(NULL, ":");
+  }
+
+
+  for(int i = 0; i < c; i++){
+    char filepath[256];
+    filepath[0] = '\0';
+    strcat(filepath, directories[i]);
+    strcat(filepath, "/");
+    strcat(filepath, name);
+
+    if(doesFileExist(filepath)){
+      return strdup(filepath);
+    }
+  }
+  return NULL;
+}
+
 
 
 int main(int argc, char *argv[]) {
@@ -94,8 +129,11 @@ int main(int argc, char *argv[]) {
         continue;
       }
       for(size_t i =1; i < tokens_len; i++){
+        char* filePath = isValidPathFile(tokens[i]);
         if(isValidCommand(tokens[i])){
           printf("%s is a shell builtin\n", tokens[i]);
+        }else if(filePath){
+          printf("%s is %s\n", tokens[i], filePath);
         }else{
           printf("%s: not found\n", tokens[i]);
         }
