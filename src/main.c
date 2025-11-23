@@ -18,6 +18,22 @@ size_t tokenizeCommands(char* buf, char** tokens){
   return tokens_len;
 }
 
+
+char *valid_commands[] = {"exit", "type", "echo", "clear"};
+
+int isValidCommand(char* command){
+  size_t size = sizeof(valid_commands)/sizeof(char*);
+
+  for(int i = 0; i < size; i++){
+    if(strcmp(command, valid_commands[i]) == 0){
+      return 1;
+    }
+  }
+  return 0;
+}
+
+
+
 int main(int argc, char *argv[]) {
   // Flush after every printf
   setbuf(stdout, NULL);
@@ -45,7 +61,10 @@ int main(int argc, char *argv[]) {
     size_t tokens_len = tokenizeCommands(buf, tokens);
 
     if(tokens_len < 1) continue;
-
+    if(!isValidCommand(tokens[0])){
+      printf("%s: command not found\n", tokens[0]);
+      continue;
+    };
     // CLEAR COMMAND
     if(strcmp(tokens[0], "clear") == 0){
       if(tokens_len == 1){
@@ -70,9 +89,24 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
+    if(strcmp(tokens[0], "type") == 0){
+      if(tokens_len == 1){
+        continue;
+      }
+      for(size_t i =1; i < tokens_len; i++){
+        if(isValidCommand(tokens[i])){
+          printf("%s is a shell builtin\n", tokens[i]);
+        }else{
+          printf("%s: not found\n", tokens[i]);
+        }
+      }
+
+    }
 
 
-    printf("%s: command not found\n", buf);
+
+
+    free(tokens);
   }
 
   return 0;
