@@ -33,20 +33,18 @@ int isValidCommand(char* command){
 }
 
 int doesFileExist(char* filepath){
-  FILE *file = fopen(filepath, "r");
-  if(file != NULL){
-    fclose(file);
-    return 1;
-  }
-  return 0;
+  return access(filepath, X_OK) == 0;
 }
 
 char* isValidPathFile(char* name){
   char* path = getenv("PATH");
-  char* directory = strtok(path, ":");
+  if(!path) return NULL;
+  char *path_copy = strdup(path);
+  if(!path_copy) return NULL;
+  char* directory = strtok(path_copy, ":");
   int c = 0;
   char* directories[100];
-  while(directory != NULL){
+  while(directory != NULL && c < 100){
     directories[c] = directory;
     c++;
     directory = strtok(NULL, ":");
@@ -61,9 +59,11 @@ char* isValidPathFile(char* name){
     strcat(filepath, name);
 
     if(doesFileExist(filepath)){
+      free(path_copy);
       return strdup(filepath);
     }
   }
+  free(path_copy);
   return NULL;
 }
 
@@ -137,6 +137,7 @@ int main(int argc, char *argv[]) {
         }else{
           printf("%s: not found\n", tokens[i]);
         }
+        free(filePath);
       }
 
     }
