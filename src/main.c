@@ -19,7 +19,7 @@ size_t tokenizeCommands(char* buf, char** tokens){
 }
 
 
-char *valid_commands[] = {"exit", "type", "echo", "clear"};
+char *valid_commands[] = {"exit", "type", "echo", "clear", "pwd"};
 
 int isValidCommand(char* command){
   size_t size = sizeof(valid_commands)/sizeof(char*);
@@ -139,6 +139,16 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
+    if(strcmp(tokens[0], "pwd") == 0){
+      char output[124];
+      FILE *fp = popen(tokens[0], "r");
+      if(fgets(output, sizeof(output), fp) != NULL){
+        printf("%s", output);
+      }
+      continue;
+    }
+
+
     if(isValidPathFile(tokens[0])){
       char output[1024];
       char command[300];
@@ -155,9 +165,6 @@ int main(int argc, char *argv[]) {
       }
       continue;
     }
-
-
-
 
 
     printf("%s: command not found\n", tokens[0]);
