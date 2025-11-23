@@ -96,10 +96,7 @@ int main(int argc, char *argv[]) {
     size_t tokens_len = tokenizeCommands(buf, tokens);
 
     if(tokens_len < 1) continue;
-    if(!isValidCommand(tokens[0])){
-      printf("%s: command not found\n", tokens[0]);
-      continue;
-    };
+
     // CLEAR COMMAND
     if(strcmp(tokens[0], "clear") == 0){
       if(tokens_len == 1){
@@ -139,11 +136,31 @@ int main(int argc, char *argv[]) {
         }
         free(filePath);
       }
+      continue;
+    }
 
+    if(isValidPathFile(tokens[0])){
+      char output[1024];
+      char command[300];
+      command[0] = '\0';
+      strcat(command, tokens[0]);
+      for(int i = 1; i < tokens_len; i++){
+        strcat(command, " ");
+        strcat(command, tokens[i]);
+      }
+
+      FILE *fp = popen(command, "r");
+      while(fgets(output, sizeof(output), fp) != NULL){
+        printf("%s", output);
+      }
+      continue;
     }
 
 
 
+
+
+    printf("%s: command not found\n", tokens[0]);
 
     free(tokens);
   }
