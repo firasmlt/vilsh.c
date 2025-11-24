@@ -70,7 +70,9 @@ char* isValidPathFile(char* name){
 
 int isValidDirectory(char* path){
   struct stat statData;
+
   int result = stat(path, &statData);
+
   if(stat(path, &statData) == 0){
     return 1;
   };
@@ -85,11 +87,6 @@ int main(int argc, char *argv[]) {
   setbuf(stdout, NULL);
 
   char buf[4094];
-  char currentDirectory[300];
-
-  if (getcwd(currentDirectory, sizeof(currentDirectory)) == NULL) {
-    perror("getcwd() error");
-  }
 
   while(1){
     printf("$ ");
@@ -157,7 +154,10 @@ int main(int argc, char *argv[]) {
     }
 
     if(strcmp(tokens[0], "pwd") == 0){
-      printf("%s\n", currentDirectory);
+      char output[300];
+      if(getcwd(output, sizeof(output))!= NULL){
+        printf("%s\n", output);
+      }
       continue;
     }
 
@@ -181,16 +181,9 @@ int main(int argc, char *argv[]) {
 
 
     if(strcmp(tokens[0], "cd") == 0){
-      if(tokens_len == 1) continue;
-      if(isValidDirectory(tokens[1])){
-        strcpy(currentDirectory, tokens[1]);
-        size_t currSize = strlen(currentDirectory);
-        if(currSize > 1 && currentDirectory[currSize-1] == '/'){
-          currentDirectory[currSize-1] = '\0';
-        }
-      }else{
-        printf("cd: %s: No such file or directory\n", tokens[1]);
-      }
+      if(tokens_len == 1) chdir("~/");
+      if(isValidDirectory(tokens[1])) chdir(tokens[1]);
+      else printf("cd: %s: No such file or directory\n", tokens[1]);
       continue;
     }
 
