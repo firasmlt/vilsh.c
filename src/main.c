@@ -88,6 +88,9 @@ int main(int argc, char *argv[]) {
 
   char buf[4094];
 
+  char* user = getenv("USER");
+  char* home = getenv("HOME");
+
   while(1){
     printf("$ ");
     if(!fgets(buf, sizeof(buf), stdin)){
@@ -181,8 +184,10 @@ int main(int argc, char *argv[]) {
 
 
     if(strcmp(tokens[0], "cd") == 0){
-      if(tokens_len == 1) chdir("~/");
-      if(isValidDirectory(tokens[1])) chdir(tokens[1]);
+      if(tokens_len == 1 || *tokens[1] == '~'){
+        chdir(home);
+      }
+      else if(isValidDirectory(tokens[1])) chdir(tokens[1]);
       else printf("cd: %s: No such file or directory\n", tokens[1]);
       continue;
     }
