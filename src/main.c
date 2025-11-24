@@ -3,6 +3,7 @@
 #include <string.h>
 #include <wchar.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #define MAXTOKENS 100;
 
 size_t tokenizeCommands(char* buf, char** tokens){
@@ -67,6 +68,16 @@ char* isValidPathFile(char* name){
   return NULL;
 }
 
+int isValidDirectory(char* path){
+  struct stat statData;
+  int result = stat(path, &statData);
+  if(stat(path, &statData) == 0){
+    return 1;
+  };
+  return 0;
+}
+
+
 
 
 int main(int argc, char *argv[]) {
@@ -74,6 +85,12 @@ int main(int argc, char *argv[]) {
   setbuf(stdout, NULL);
 
   char buf[4094];
+  char currentDirectory[300];
+
+  if (getcwd(currentDirectory, sizeof(currentDirectory)) == NULL) {
+    perror("getcwd() error");
+  }
+
   while(1){
     printf("$ ");
     if(!fgets(buf, sizeof(buf), stdin)){
@@ -140,11 +157,7 @@ int main(int argc, char *argv[]) {
     }
 
     if(strcmp(tokens[0], "pwd") == 0){
-      char output[124];
-      FILE *fp = popen(tokens[0], "r");
-      if(fgets(output, sizeof(output), fp) != NULL){
-        printf("%s", output);
-      }
+      printf("%s\n", currentDirectory);
       continue;
     }
 
@@ -166,6 +179,20 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
+
+    if(strcmp(tokens[0], "cd") == 0){
+      if(tokens_len == 1) continue;
+      if(isValidDirectory(tokens[1])){
+        strcpy(currentDirectory, tokens[1]);
+        size_t currSize = strlen(currentDirectory);
+        if(currSize > 1 && currentDirectory[currSize-1] == '/'){
+          currentDirectory[currSize-1] = '\0';
+        }
+      }else{
+        printf("cd: %s: No such file or directory\n", tokens[1]);
+      }
+      continue;
+    }
 
     printf("%s: command not found\n", tokens[0]);
 
