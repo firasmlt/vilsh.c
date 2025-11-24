@@ -8,14 +8,47 @@
 
 size_t tokenizeCommands(char* buf, char** tokens){
   size_t tokens_len = 0;
+  int is_string = 0;
+  char tmptoken[256];
+  tmptoken[0] = '\0';
+  size_t len = 0;
 
-  char* token = strtok(buf, " ");
-
-  while(token != NULL){
-    tokens[tokens_len] = strdup(token);
-    tokens_len++;
-    token = strtok(NULL, " ");
+  while(*buf != '\0' && tokens_len < 100){
+    if(*buf == '\''){
+      is_string = !is_string;
+    }else if(*buf == ' '){
+      if(len > 0 && !is_string){
+        tmptoken[len] = '\0';
+        tokens[tokens_len] = strdup(tmptoken);
+        tmptoken[0] = '\0';
+        tokens_len++;
+        len = 0;
+      }
+      if(is_string){
+        tmptoken[len++] = ' ';
+        tmptoken[len] = '\0';
+      }
+    }else{
+      tmptoken[len++] = *buf;
+      tmptoken[len] = '\0';
+    }
+    buf++;
   }
+  if(len > 0){
+    tmptoken[len] = '\0';
+    tokens[tokens_len] = strdup(tmptoken);
+    tokens_len++;
+  }
+
+
+
+  // char* token = strtok(buf, " ");
+  //
+  // while(token != NULL){
+  //   tokens[tokens_len] = strdup(token);
+  //   tokens_len++;
+  //   token = strtok(NULL, " ");
+  // }
   return tokens_len;
 }
 
@@ -123,9 +156,30 @@ int main(int argc, char *argv[]) {
       }
       continue;
     }
+
+
+    if(argc > 1 && strcmp(argv[1], "debug") == 0){
+      for(int i = 0; i < tokens_len; i++){
+        printf("token[%d] = %s\n", i, tokens[i]);
+      }
+    }
     // EXIT COMMAND
     if(strcmp(tokens[0], "exit") == 0 && tokens_len == 1){
       break;
+    }
+
+    // CAT COMMAND
+    if(strcmp(tokens[0], "cat") == 0){
+      if(tokens_len == 1) continue;
+      char cmd[256] = "cat ";
+      for(int i = 1; i < tokens_len; i++){
+        strcat(cmd, "'");
+        strcat(cmd, tokens[i]);
+        strcat(cmd, "'");
+        if(i!=tokens_len-1) strcat(cmd, " ");
+      }
+      system(cmd);
+      continue;
     }
 
     // ECHO COMMAND
@@ -191,7 +245,6 @@ int main(int argc, char *argv[]) {
       else printf("cd: %s: No such file or directory\n", tokens[1]);
       continue;
     }
-
     printf("%s: command not found\n", tokens[0]);
 
     free(tokens);
