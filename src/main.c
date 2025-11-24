@@ -14,8 +14,22 @@ size_t tokenizeCommands(char* buf, char** tokens){
   size_t len = 0;
 
   while(*buf != '\0' && tokens_len < 100){
-    if(*buf == '\''){
-      is_string = !is_string;
+    if(*buf == '"'){
+      if(is_string == 1){
+        tmptoken[len++] = *buf;
+        tmptoken[len] = '\0';
+      }else{
+        if(is_string == 0) is_string = 2;
+        else is_string = 0;
+      }
+    }else if(*buf == '\''){
+      if(is_string == 2){
+        tmptoken[len++] = *buf;
+        tmptoken[len] = '\0';
+      }else{
+        if(is_string == 0) is_string = 1;
+        else is_string = 0;
+      }
     }else if(*buf == ' '){
       if(len > 0 && !is_string){
         tmptoken[len] = '\0';
@@ -173,9 +187,16 @@ int main(int argc, char *argv[]) {
       if(tokens_len == 1) continue;
       char cmd[256] = "cat ";
       for(int i = 1; i < tokens_len; i++){
-        strcat(cmd, "'");
-        strcat(cmd, tokens[i]);
-        strcat(cmd, "'");
+        if(strchr(tokens[i], '\'')){
+          strcat(cmd, "\"");
+          strcat(cmd, tokens[i]);
+          strcat(cmd, "\"");
+
+        }else{
+          strcat(cmd, "'");
+          strcat(cmd, tokens[i]);
+          strcat(cmd, "'");
+        }
         if(i!=tokens_len-1) strcat(cmd, " ");
       }
       system(cmd);
