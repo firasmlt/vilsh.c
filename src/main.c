@@ -4,17 +4,26 @@
 #include <wchar.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
+#include <errno.h>
 #define MAXTOKENS 100;
 
+// if in escape mode then add character to token and close escape mode
+// if inside string then space needs to be space
 size_t tokenizeCommands(char* buf, char** tokens){
   size_t tokens_len = 0;
   int is_string = 0;
   char tmptoken[256];
   tmptoken[0] = '\0';
   size_t len = 0;
+  int escape_mode = 0;
 
   while(*buf != '\0' && tokens_len < 100){
-    if(*buf == '"'){
+    if(escape_mode){
+      tmptoken[len++] = *buf;
+      tmptoken[len] = '\0';
+      escape_mode = 0;
+    }else if(*buf == '"'){
       if(is_string == 1){
         tmptoken[len++] = *buf;
         tmptoken[len] = '\0';
@@ -42,6 +51,8 @@ size_t tokenizeCommands(char* buf, char** tokens){
         tmptoken[len++] = ' ';
         tmptoken[len] = '\0';
       }
+    }else if(*buf == '\\' && is_string == 0){
+      escape_mode = 1;
     }else{
       tmptoken[len++] = *buf;
       tmptoken[len] = '\0';
@@ -182,28 +193,45 @@ int main(int argc, char *argv[]) {
       break;
     }
 
-    // CAT COMMAND
-    if(strcmp(tokens[0], "cat") == 0){
-      if(tokens_len == 1) continue;
-      char cmd[256] = "cat ";
-      for(int i = 1; i < tokens_len; i++){
-        if(strchr(tokens[i], '\'')){
-          strcat(cmd, "\"");
-          strcat(cmd, tokens[i]);
-          strcat(cmd, "\"");
-
-        }else{
-          strcat(cmd, "'");
-          strcat(cmd, tokens[i]);
-          strcat(cmd, "'");
-        }
-        if(i!=tokens_len-1) strcat(cmd, " ");
+    if (strcmp(tokens[0], "cat") == 0) {
+      pid_t pid = fork();
+      if(pid == 0){
+        execvp("cat", tokens);
+        perror("execvp failed");
+        exit(1);
+      }else if(pid > 0){
+        int status;
+        waitpid(pid, &status, 0);
+        continue;
+      }else{
+        printf("fork failed");
+        fprintf(stderr, "fork failed, errno = %d (%s)\n", errno, strerror(errno));
+        continue;
       }
-      system(cmd);
-      continue;
     }
 
-    // ECHO COMMAND
+    // CAT COMMAND
+    // if(strcmp(tokens[0], "cat") == 0){
+    //   if(tokens_len == 1) continue;
+    //   char cmd[256] = "cat ";
+    //   for(int i = 1; i < tokens_len; i++){
+    //     if(strchr(tokens[i], '\'')){
+    //       strcat(cmd, "\"");
+    //       strcat(cmd, tokens[i]);
+    //       strcat(cmd, "\"");
+    //
+    //     }else{
+    //       strcat(cmd, "'");
+    //       strcat(cmd, tokens[i]);
+    //       strcat(cmd, "'");
+    //     }
+    //     if(i!=tokens_len-1) strcat(cmd, " ");
+    //   }
+    //   system(cmd);
+    //   continue;
+    // }
+    //
+    // // ECHO COMMAND
     if(strcmp(tokens[0], "echo") == 0){
       for(size_t i = 1; i < tokens_len; i++){
         if(i!=1) printf(" ");
@@ -268,6 +296,10 @@ int main(int argc, char *argv[]) {
     }
     printf("%s: command not found\n", tokens[0]);
 
+
+    for(size_t i = 0; i< tokens_len; i++){
+      free(tokens[i]);
+    }
     free(tokens);
   }
 
