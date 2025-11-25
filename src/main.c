@@ -51,7 +51,7 @@ size_t tokenizeCommands(char* buf, char** tokens){
         tmptoken[len++] = ' ';
         tmptoken[len] = '\0';
       }
-    }else if(*buf == '\\' && is_string == 0){
+    }else if(*buf == '\\' && (is_string == 0 || *(buf + 1) == '\\' || (*(buf + 1) == '\'' && is_string == 1) || (*(buf + 1) == '\"') && is_string == 2)){
       escape_mode = 1;
     }else{
       tmptoken[len++] = *buf;
